@@ -49,7 +49,7 @@ use crate::{
     Deepgram, DeepgramError, Result, Transcription,
 };
 
-static LIVE_LISTEN_URL_PATH: &str = "v1/listen";
+static LIVE_LISTEN_URL_PATH: &str = "transcription/v1/listen";
 
 #[derive(Clone, Debug)]
 pub struct WebsocketBuilder<'a> {
