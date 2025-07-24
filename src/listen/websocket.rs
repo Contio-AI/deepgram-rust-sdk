@@ -657,6 +657,14 @@ impl WebsocketHandle {
         let url = builder.as_url()?;
         let host = url.host_str().ok_or(DeepgramError::InvalidUrl)?;
 
+        // Use the same user agent as the main HTTP client
+        static USER_AGENT: &str = concat!(
+            env!("CARGO_PKG_NAME"),
+            "/",
+            env!("CARGO_PKG_VERSION"),
+            " rust",
+        );
+
         let request = {
             let http_builder = Request::builder()
                 .method("GET")
@@ -665,7 +673,8 @@ impl WebsocketHandle {
                 .header("host", host)
                 .header("connection", "upgrade")
                 .header("upgrade", "websocket")
-                .header("sec-websocket-version", "13");
+                .header("sec-websocket-version", "13")
+                .header("user-agent", USER_AGENT);
 
             let builder = if let Some(auth) = &builder.deepgram.auth {
                 http_builder.header("authorization", auth.header_value())
@@ -879,7 +888,7 @@ mod tests {
         let dg = crate::Deepgram::new("token").unwrap();
         assert_eq!(
             dg.transcription().listen_stream_url().to_string(),
-            "wss://api.deepgram.com/v1/listen",
+            "wss://api.deepgram.com/transcription/v1/listen",
         );
     }
 
@@ -889,7 +898,7 @@ mod tests {
             crate::Deepgram::with_base_url_and_api_key("http://localhost:8080", "token").unwrap();
         assert_eq!(
             dg.transcription().listen_stream_url().to_string(),
-            "ws://localhost:8080/v1/listen",
+            "ws://localhost:8080/transcription/v1/listen",
         );
     }
 
