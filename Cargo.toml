@@ -103,3 +103,8 @@ required-features = ["speak"]
 name = "text_to_speech_to_stream"
 path = "examples/speak/rest/text_to_speech_to_stream.rs"
 required-features = ["speak"]
+
+[[example]]
+name = "flux_stream"
+path = "examples/transcription/websocket/flux_stream.rs"
+required-features = ["listen"]

@@ -43,13 +43,14 @@ use uuid::Uuid;
 use self::file_chunker::FileChunker;
 use crate::{
     common::{
-        options::{Encoding, Endpointing, Options},
+        options::{Encoding, Endpointing, Model, Options},
         stream_response::StreamResponse,
     },
     Deepgram, DeepgramError, Result, Transcription,
 };
 
 static LIVE_LISTEN_URL_PATH: &str = "transcription/v1/listen";
+static LIVE_LISTEN_V2_URL_PATH: &str = "v2/listen";
 
 #[derive(Clone, Debug)]
 pub struct WebsocketBuilder<'a> {
@@ -66,6 +67,9 @@ pub struct WebsocketBuilder<'a> {
     stream_url: Url,
     keep_alive: Option<bool>,
     callback: Option<Url>,
+    eot_threshold: Option<f32>,
+    eager_eot_threshold: Option<f32>,
+    eot_timeout_ms: Option<u32>,
 }
 
 impl Transcription<'_> {
@@ -133,6 +137,7 @@ impl Transcription<'_> {
     /// assert_eq!(&builder.urlencoded().unwrap(), "model=nova-2&detect_language=true&no_delay=true")
     /// ```
     pub fn stream_request_with_options(&self, options: Options) -> WebsocketBuilder<'_> {
+        let stream_url = self.listen_stream_url(&options);
         WebsocketBuilder {
             deepgram: self.0,
             options,
@@ -144,23 +149,36 @@ impl Transcription<'_> {
             interim_results: None,
             no_delay: None,
             vad_events: None,
-            stream_url: self.listen_stream_url(),
+            stream_url,
             keep_alive: None,
             callback: None,
+            eot_threshold: None,
+            eager_eot_threshold: None,
+            eot_timeout_ms: None,
         }
     }
 
-    fn listen_stream_url(&self) -> Url {
+    fn listen_stream_url(&self, options: &Options) -> Url {
+        // Choose endpoint based on model
+        let endpoint_path = match options.model() {
+            Some(Model::FluxGeneralEn) => LIVE_LISTEN_V2_URL_PATH,
+            _ => LIVE_LISTEN_URL_PATH,
+        };
+
         // base
         let mut url =
-            self.0.base_url.join(LIVE_LISTEN_URL_PATH).expect(
+            self.0.base_url.join(endpoint_path).expect(
                 "base_url is checked to be a valid base_url when constructing Deepgram client",
             );
 
         match url.scheme() {
-            "http" | "ws" => url.set_scheme("ws").expect("a valid conversion according to the .set_scheme docs"),
-            "https" | "wss" => url.set_scheme("wss").expect("a valid conversion according to the .set_scheme docs"),
-            _ => unreachable!("base_url is validated to have a scheme of http, https, ws, or wss when constructing Deepgram client"),
+            "http" | "ws" => url
+                .set_scheme("ws")
+                .expect("a valid conversion according to the .set_scheme docs"),
+            "https" | "wss" => url
+                .set_scheme("wss")
+                .expect("a valid conversion according to the .set_scheme docs"),
+            _ => panic!("base_url scheme must be http, https, ws, or wss"),
         }
         url
     }
@@ -219,6 +237,9 @@ impl WebsocketBuilder<'_> {
             vad_events,
             stream_url,
             callback,
+            eot_threshold,
+            eager_eot_threshold,
+            eot_timeout_ms,
         } = self;
 
         let mut url = stream_url.clone();
@@ -264,6 +285,15 @@ impl WebsocketBuilder<'_> {
             }
             if let Some(callback) = callback {
                 pairs.append_pair("callback", callback.as_ref());
+            }
+            if let Some(eot_threshold) = eot_threshold {
+                pairs.append_pair("eot_threshold", &eot_threshold.to_string());
+            }
+            if let Some(eager_eot_threshold) = eager_eot_threshold {
+                pairs.append_pair("eager_eot_threshold", &eager_eot_threshold.to_string());
+            }
+            if let Some(eot_timeout_ms) = eot_timeout_ms {
+                pairs.append_pair("eot_timeout_ms", &eot_timeout_ms.to_string());
             }
         }
 
@@ -326,6 +356,24 @@ impl WebsocketBuilder<'_> {
 
     pub fn callback(mut self, callback: Url) -> Self {
         self.callback = Some(callback);
+
+        self
+    }
+
+    pub fn eot_threshold(mut self, threshold: f32) -> Self {
+        self.eot_threshold = Some(threshold);
+
+        self
+    }
+
+    pub fn eager_eot_threshold(mut self, threshold: f32) -> Self {
+        self.eager_eot_threshold = Some(threshold);
+
+        self
+    }
+
+    pub fn eot_timeout_ms(mut self, timeout: u32) -> Self {
+        self.eot_timeout_ms = Some(timeout);
 
         self
     }
@@ -886,8 +934,9 @@ mod tests {
     #[test]
     fn test_stream_url() {
         let dg = crate::Deepgram::new("token").unwrap();
+        let options = Options::default();
         assert_eq!(
-            dg.transcription().listen_stream_url().to_string(),
+            dg.transcription().listen_stream_url(&options).to_string(),
             "wss://api.deepgram.com/transcription/v1/listen",
         );
     }
@@ -896,9 +945,20 @@ mod tests {
     fn test_stream_url_custom_host() {
         let dg =
             crate::Deepgram::with_base_url_and_api_key("http://localhost:8080", "token").unwrap();
+        let options = Options::default();
         assert_eq!(
-            dg.transcription().listen_stream_url().to_string(),
+            dg.transcription().listen_stream_url(&options).to_string(),
             "ws://localhost:8080/transcription/v1/listen",
+        );
+    }
+
+    #[test]
+    fn test_flux_stream_url() {
+        let dg = crate::Deepgram::new("token").unwrap();
+        let options = Options::builder().model(Model::FluxGeneralEn).build();
+        assert_eq!(
+            dg.transcription().listen_stream_url(&options).to_string(),
+            "wss://api.deepgram.com/v2/listen",
         );
     }
 

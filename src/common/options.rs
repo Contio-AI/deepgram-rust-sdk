@@ -218,6 +218,17 @@ pub enum Model {
     /// punctuation, and capitalization.
     Nova2,
 
+    /// Conversational speech recognition model built specifically for voice agents.
+    ///
+    /// Flux features model-integrated end-of-turn detection, configurable turn-taking
+    /// dynamics, and ultra-low latency (~260ms) optimized for voice agent pipelines.
+    /// Provides Nova-3 level accuracy with advanced conversation flow management
+    /// including StartOfTurn, EagerEndOfTurn, TurnResumed, and EndOfTurn events.
+    ///
+    /// Ideal for turn-based voice agents, customer service bots, phone assistants,
+    /// and real-time conversation tools that require natural interruption handling.
+    FluxGeneralEn,
+
     /// Recommended for readability and low word error rates.
     ///
     /// Nova is the predecessor to Nova-2. Training on this model spans over
@@ -754,6 +765,13 @@ impl Options {
     ///
     pub fn urlencoded(&self) -> Result<String, serde_urlencoded::ser::Error> {
         serde_urlencoded::to_string(SerializableOptions::from(self))
+    }
+
+    /// Get the model option.
+    ///
+    /// This is used internally for endpoint selection.
+    pub(crate) fn model(&self) -> &Option<Model> {
+        &self.model
     }
 }
 
@@ -2309,6 +2327,7 @@ impl AsRef<str> for Model {
         match self {
             Self::Nova3 => "nova-3",
             Self::Nova2 => "nova-2",
+            Self::FluxGeneralEn => "flux-general-en",
             Self::Nova3Medical => "nova-3-medical",
             Self::Nova2Meeting => "nova-2-meeting",
             Self::Nova2Phonecall => "nova-2-phonecall",
@@ -2371,6 +2390,7 @@ impl From<String> for Model {
         match &*value {
             "nova-3" | "nova-3-general" => Self::Nova3,
             "nova-2" | "nova-2-general" => Self::Nova2,
+            "flux-general-en" => Self::FluxGeneralEn,
             "nova-3-medical" => Self::Nova3Medical,
             "nova-2-meeting" => Self::Nova2Meeting,
             "nova-2-phonecall" => Self::Nova2Phonecall,

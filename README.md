@@ -48,6 +48,24 @@ There are two ways to authenticate with the Deepgram API:
     let dg = Deepgram::with_temp_token("YOUR_TEMPORARY_TOKEN");
     ```
 
+3.  **Custom Bearer Tokens with Reverse Proxy**: If you're using a reverse proxy
+    (like Caddy, nginx, etc.) to validate custom authentication tokens before
+    forwarding requests to Deepgram, you can use the temp token method with your
+    custom Bearer token. This is useful when you want to use your application's
+    own authentication system.
+
+    ```rust
+    use deepgram::Deepgram;
+
+    // For custom proxy URL with custom Bearer token
+    let dg = Deepgram::with_base_url_and_temp_token(
+        "http://your-proxy.com",
+        "your_custom_app_token"
+    );
+
+    // This will send: Authorization: Bearer your_custom_app_token
+    ```
+
 ## Current Status
 
 This SDK is currently Community owned but is moving to a stable `1.0` version soon.
@@ -78,6 +96,26 @@ To make sure our community is safe for all, be sure to review and agree to our
 
 ```sh
 cargo build
+```
+
+### Updating with upstream repo
+
+If you're working with a fork of this repository and want to update it with the latest changes from the upstream Deepgram repository, you can use the following commands:
+
+```sh
+# Fetch the latest changes from upstream
+git fetch upstream
+
+# Rebase your commits on top of upstream/main
+git rebase upstream/main
+
+# Force push to your fork (safely)
+git push --force-with-lease origin main
+```
+
+**Note**: Make sure you have the upstream remote configured first:
+```sh
+git remote add upstream https://github.com/deepgram/deepgram-rust-sdk.git
 ```
 
 ## Getting Help

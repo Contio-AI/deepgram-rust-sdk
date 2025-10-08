@@ -95,6 +95,21 @@ pub struct Metadata {
     pub model_uuid: String,
 }
 
+/// Flux turn events for conversational speech recognition.
+#[derive(Debug, Serialize, Deserialize)]
+pub enum TurnEvent {
+    #[allow(missing_docs)]
+    Update,
+    #[allow(missing_docs)]
+    StartOfTurn,
+    #[allow(missing_docs)]
+    EagerEndOfTurn,
+    #[allow(missing_docs)]
+    TurnResumed,
+    #[allow(missing_docs)]
+    EndOfTurn,
+}
+
 /// Possible websocket message types
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -167,5 +182,65 @@ pub enum StreamResponse {
 
         #[allow(missing_docs)]
         last_word_end: f64,
+    },
+    #[allow(missing_docs)]
+    TurnInfoResponse {
+        #[allow(missing_docs)]
+        #[serde(rename = "type")]
+        type_field: String,
+
+        #[allow(missing_docs)]
+        request_id: String,
+
+        #[allow(missing_docs)]
+        event: TurnEvent,
+
+        #[allow(missing_docs)]
+        turn_index: u32,
+
+        #[allow(missing_docs)]
+        audio_window_start: f64,
+
+        #[allow(missing_docs)]
+        audio_window_end: f64,
+
+        #[allow(missing_docs)]
+        transcript: String,
+
+        #[allow(missing_docs)]
+        words: Option<Vec<Word>>,
+
+        #[allow(missing_docs)]
+        end_of_turn_confidence: f64,
+
+        #[allow(missing_docs)]
+        sequence_id: u32,
+    },
+    #[allow(missing_docs)]
+    ConnectedResponse {
+        #[allow(missing_docs)]
+        #[serde(rename = "type")]
+        type_field: String,
+
+        #[allow(missing_docs)]
+        request_id: String,
+
+        #[allow(missing_docs)]
+        sequence_id: u32,
+    },
+    #[allow(missing_docs)]
+    ErrorResponse {
+        #[allow(missing_docs)]
+        #[serde(rename = "type")]
+        type_field: String,
+
+        #[allow(missing_docs)]
+        code: String,
+
+        #[allow(missing_docs)]
+        description: String,
+
+        #[allow(missing_docs)]
+        sequence_id: u32,
     },
 }
