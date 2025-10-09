@@ -954,6 +954,7 @@ mod tests {
 
     #[test]
     fn test_flux_stream_url() {
+        use crate::common::options::Model;
         let dg = crate::Deepgram::new("token").unwrap();
         let options = Options::builder().model(Model::FluxGeneralEn).build();
         assert_eq!(
