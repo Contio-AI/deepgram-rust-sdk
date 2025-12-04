@@ -50,7 +50,7 @@ use crate::{
 };
 
 static LIVE_LISTEN_URL_PATH: &str = "transcription/v1/listen";
-static LIVE_LISTEN_V2_URL_PATH: &str = "v2/listen";
+static LIVE_LISTEN_V2_URL_PATH: &str = "transcription/v2/listen";
 
 #[derive(Clone, Debug)]
 pub struct WebsocketBuilder<'a> {
