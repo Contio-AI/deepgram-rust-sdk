@@ -48,6 +48,8 @@ use crate::{
 
 static FLUX_URL_PATH: &str = "transcription/v2/listen";
 
+static USER_AGENT: &str = concat!(env!("CARGO_PKG_NAME"), "/", env!("CARGO_PKG_VERSION"),);
+
 #[derive(Clone, Debug)]
 pub struct FluxBuilder<'a> {
     deepgram: &'a Deepgram,
@@ -315,7 +317,8 @@ impl FluxHandle {
                 .header("host", host)
                 .header("connection", "upgrade")
                 .header("upgrade", "websocket")
-                .header("sec-websocket-version", "13");
+                .header("sec-websocket-version", "13")
+                .header("user-agent", USER_AGENT);
 
             let builder = if let Some(auth) = &builder.deepgram.auth {
                 http_builder.header("authorization", auth.header_value())
