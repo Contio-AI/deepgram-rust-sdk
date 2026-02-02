@@ -46,7 +46,7 @@ use crate::{
     Deepgram, DeepgramError, Result, Transcription,
 };
 
-static FLUX_URL_PATH: &str = "v2/listen";
+static FLUX_URL_PATH: &str = "transcription/v2/listen";
 
 #[derive(Clone, Debug)]
 pub struct FluxBuilder<'a> {
